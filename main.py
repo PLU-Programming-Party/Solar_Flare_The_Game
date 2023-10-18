@@ -67,20 +67,38 @@ def function_for_plotting_the_satellite_position():
     #gse_z_median = gse_z.median()
     plt.show()
 
-fig = plt.figure()
-ax = fig.add_subplot(projection='3d')
-rowskip = 3600
+def lots_of_mag_vectors_across_time():
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    rowskip = 3600
+    solar_data = pd.read_csv("data/solar_wind.csv")
+    solar_data = solar_data.iloc[rowskip:]
+    period_a_sp = solar_data[solar_data['period'] == 'train_a']
+    period_b_sp = solar_data[solar_data['period'] == 'train_b']
+    period_c_sp = solar_data[solar_data['period'] == 'train_c']
+    size = 1000
+    gse_x = [x for n, x in enumerate(period_b_sp["bx_gse"]) if n % rowskip == 0]
+    gse_y = [x for n, x in enumerate(period_b_sp["by_gse"]) if n % rowskip == 0]
+    gse_z = [x for n, x in enumerate(period_b_sp["bz_gse"]) if n % rowskip == 0]
+    ax.scatter(gse_x, gse_y, gse_z)
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
+    plt.show()
+
+
 solar_data = pd.read_csv("data/solar_wind.csv")
-solar_data = solar_data.iloc[rowskip:]
-period_a_sp = solar_data[solar_data['period'] == 'train_a']
-period_b_sp = solar_data[solar_data['period'] == 'train_b']
-period_c_sp = solar_data[solar_data['period'] == 'train_c']
-size = 1000
-gse_x = [x for n, x in enumerate(period_b_sp["bx_gse"]) if n % rowskip == 0]
-gse_y = [x for n, x in enumerate(period_b_sp["by_gse"]) if n % rowskip == 0]
-gse_z = [x for n, x in enumerate(period_b_sp["bz_gse"]) if n % rowskip == 0]
-ax.scatter(gse_x, gse_y, gse_z)
-ax.set_xlabel("x")
-ax.set_ylabel("y")
-ax.set_zlabel("z")
+
+period_a = solar_data[solar_data['period'] == 'train_a']
+data_length = 1700
+
+def normalizer(df):
+    df_max = df.max()
+    df_min = df.min()
+    return (df - df_min) / (df_max - df_min)
+
+plt.plot(period_a["timedelta"][:data_length].map(str_to_timedelta), normalizer(period_a["density"][:data_length]),
+         period_a["timedelta"][:data_length].map(str_to_timedelta), normalizer(period_a["speed"][:data_length]),
+         period_a["timedelta"][:data_length].map(str_to_timedelta), normalizer(period_a["temperature"][:data_length]))
+
 plt.show()
