@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import matplotlib as mp
 from matplotlib import pyplot as plt
@@ -97,8 +98,34 @@ def normalizer(df):
     df_min = df.min()
     return (df - df_min) / (df_max - df_min)
 
-plt.plot(period_a["timedelta"][:data_length].map(str_to_timedelta), normalizer(period_a["density"][:data_length]),
-         period_a["timedelta"][:data_length].map(str_to_timedelta), normalizer(period_a["speed"][:data_length]),
-         period_a["timedelta"][:data_length].map(str_to_timedelta), normalizer(period_a["temperature"][:data_length]))
+#plt.plot(period_a["timedelta"][:data_length].map(str_to_timedelta), normalizer(period_a["density"][:data_length]),
+         #period_a["timedelta"][:data_length].map(str_to_timedelta), normalizer(period_a["speed"][:data_length]),
+         #period_a["timedelta"][:data_length].map(str_to_timedelta), normalizer(period_a["temperature"][:data_length]))
 
-plt.show()
+#plt.show()
+
+def movingAvg(data, windowSize):
+    print('a')
+
+
+def removeNan(data):
+    for i in range(len(data)):
+        if (np.isnan(data[i])):
+            notNanIndexForward = 0
+            notNanIndexBackward = 0
+            while (np.isnan(data[i+notNanIndexForward]) and (i+notNanIndexForward) != len(data) - 1):
+                notNanIndexForward += 1
+            while (np.isnan(data[i-notNanIndexBackward]) and (i-notNanIndexBackward) != 0):
+                notNanIndexBackward += 1
+            if ((i-notNanIndexBackward) == 0):
+                data[i] = data[i+notNanIndexForward]
+            elif ((i+notNanIndexForward) == len(data) - 1):
+                data[i] = data[i-notNanIndexBackward]
+            else:
+                data[i] = (data[i+notNanIndexForward] + data[i-notNanIndexBackward])/2
+    return data
+
+data = removeNan(normalizer(period_a["temperature"][:data_length]))
+bob = [float("nan"), 1, 23, float("nan"), float("nan"), 43, float("nan")]
+bob = removeNan(bob)
+movingAvg(bob, 10)
