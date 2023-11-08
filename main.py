@@ -98,14 +98,13 @@ def normalizer(df):
     df_min = df.min()
     return (df - df_min) / (df_max - df_min)
 
-#plt.plot(period_a["timedelta"][:data_length].map(str_to_timedelta), normalizer(period_a["density"][:data_length]),
-         #period_a["timedelta"][:data_length].map(str_to_timedelta), normalizer(period_a["speed"][:data_length]),
-         #period_a["timedelta"][:data_length].map(str_to_timedelta), normalizer(period_a["temperature"][:data_length]))
-
-#plt.show()
-
 def movingAvg(data, windowSize):
-    print('a')
+    ferret = []
+
+    for i in range(len(data)):
+        fish = sum(data[i:i+windowSize])/windowSize
+        ferret.append(fish)
+    return ferret
 
 
 def removeNan(data):
@@ -125,7 +124,15 @@ def removeNan(data):
                 data[i] = (data[i+notNanIndexForward] + data[i-notNanIndexBackward])/2
     return data
 
-data = removeNan(normalizer(period_a["temperature"][:data_length]))
+data = normalizer(period_a["temperature"][:data_length])
 bob = [float("nan"), 1, 23, float("nan"), float("nan"), 43, float("nan")]
-bob = removeNan(bob)
-movingAvg(bob, 10)
+lizard = removeNan(data)
+twoDogs = movingAvg(lizard, 10)
+
+
+# period_a["timedelta"][:data_length].map(str_to_timedelta), data,
+# period_a["timedelta"][:data_length].map(str_to_timedelta), lizard
+
+plt.plot(period_a["timedelta"][:data_length].map(str_to_timedelta), movingAvg(lizard, 100))
+
+plt.show()
