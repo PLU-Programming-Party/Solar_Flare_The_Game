@@ -1,6 +1,32 @@
 import pygame
 import random
 
+
+class Particle:
+    def __init__(self, position, size, velocity):
+        self.position = position
+        self.size = size
+        self.velocity = velocity
+        #chai tea, chai means tea, you are saying tea tea bro.
+
+
+class ParticleManagerSpitter():
+    #80mphMonster
+    #GarbageIsGood
+    def __init__(self, position):
+        self.particleArray = []
+        self.position = position
+        self.rotation = 0
+
+    def spit(self, screen, dt):
+        velocityVector = pygame.Vector2(150,0)
+        self.rotation = self.rotation + 1
+        self.particleArray.append(Particle(self.position.copy(), random.uniform(2,8), velocityVector.rotate(self.rotation)))
+        for particle in self.particleArray:
+            particle.position += particle.velocity * dt
+            pygame.draw.circle(screen, "orange", particle.position, particle.size)
+
+
 def backgroundStars():
     allStar = []
     for i in range(250):
@@ -18,8 +44,11 @@ running = True
 dt = 0
 
 wind_position = pygame.Vector2(0, screen.get_height() / 2)
+particleSpitter = ParticleManagerSpitter(pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2))
 
 starPos = backgroundStars()
+
+
 
 while running:
     # poll for events
@@ -34,7 +63,7 @@ while running:
     for star in starPos:
         pygame.draw.circle(screen, "white", star, 1)
 
-
+    particleSpitter.spit(screen, dt)
     pygame.draw.circle(screen, "yellow", wind_position, 40)
 
     # keys = pygame.key.get_pressed()
@@ -45,6 +74,7 @@ while running:
     # if keys[pygame.K_a]:
     #     wind_position.x -= 300 * dt
     # if keys[pygame.K_d]:
+    #     wind_position.x += 150 * dt
     wind_position.x += 150 * dt
 
     if(wind_position.x > screen.get_width()):
@@ -58,6 +88,7 @@ while running:
     dt = clock.tick(60) / 1000
 
 pygame.quit()
+
 
 
 
