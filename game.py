@@ -37,6 +37,7 @@ class ParticleManagerSpitter():
 
 
     def spitoon(self, screen):
+        #spitoon
         self.particleArray = [p for p in self.particleArray if not self.spitoonable(screen, p)]
 
 
