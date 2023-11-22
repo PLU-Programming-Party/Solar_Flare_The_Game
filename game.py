@@ -1,3 +1,5 @@
+import math
+
 import pygame
 import random
 
@@ -16,15 +18,47 @@ class ParticleManagerSpitter():
     def __init__(self, position):
         self.particleArray = []
         self.position = position
-        self.rotation = 0
+        self.rotation = 360
 
-    def spit(self, screen, dt):
+    def spit(self, screen, dt, player):
         velocityVector = pygame.Vector2(150,0)
-        self.rotation = self.rotation + 1
+        self.rotation = random.randint(-180, 0)
         self.particleArray.append(Particle(self.position.copy(), random.uniform(2,8), velocityVector.rotate(self.rotation)))
         for particle in self.particleArray:
             particle.position += particle.velocity * dt
+            if (collisionDetector(player, particle)):
+                particle.position.y = screen.get_width() + 1
+                scalar = (particle.size/player.size)
+                player.velocity = pygame.Vector2((player.velocity.x + particle.velocity.x) * scalar, (player.velocity.y + particle.velocity.y) * scalar)
+        self.spitoon(screen)
+        for particle in self.particleArray:
             pygame.draw.circle(screen, "orange", particle.position, particle.size)
+
+
+
+    def spitoon(self, screen):
+        self.particleArray = [p for p in self.particleArray if not self.spitoonable(screen, p)]
+
+
+
+    def spitoonable(self, screen, p):
+        if ((p.position.x > screen.get_width()) or (p.position.x < 0) or (p.position.y > screen.get_height()) or (p.position.y < 0)):
+            return True
+        else:
+            return False
+
+class Player:
+    def __init__(self, position, velocity, size):
+        self.position = position
+        self.velocity = velocity
+        self.size = size
+
+    def tick(self, screen, dt):
+        pygame.draw.circle(screen, "green", self.position, self.size)
+        self.position = self.position + self.velocity * dt
+        if (self.position.x > screen.get_width()):
+            self.position.x = 0
+
 
 
 def backgroundStars():
@@ -36,6 +70,13 @@ def backgroundStars():
         allStar.append(starPos)
     return allStar
 
+
+def collisionDetector(player, particle):
+    dist = math.sqrt((player.position.x - particle.position.x) ** 2 + (player.position.y - particle.position.y) ** 2)
+    return (dist <= (particle.size + player.size))
+
+
+
 # pygame setup
 pygame.init()
 screen = pygame.display.set_mode((1280, 720))
@@ -43,8 +84,8 @@ clock = pygame.time.Clock()
 running = True
 dt = 0
 
-wind_position = pygame.Vector2(0, screen.get_height() / 2)
-particleSpitter = ParticleManagerSpitter(pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2))
+player = Player(pygame.Vector2(0, screen.get_height() / 2), pygame.Vector2(150, 0), 15)
+particleSpitter = ParticleManagerSpitter(pygame.Vector2(screen.get_width() / 2, screen.get_height()))
 
 starPos = backgroundStars()
 
@@ -63,8 +104,8 @@ while running:
     for star in starPos:
         pygame.draw.circle(screen, "white", star, 1)
 
-    particleSpitter.spit(screen, dt)
-    pygame.draw.circle(screen, "yellow", wind_position, 40)
+    particleSpitter.spit(screen, dt, player)
+    player.tick(screen, dt)
 
     # keys = pygame.key.get_pressed()
     # if keys[pygame.K_w]:
@@ -75,10 +116,6 @@ while running:
     #     wind_position.x -= 300 * dt
     # if keys[pygame.K_d]:
     #     wind_position.x += 150 * dt
-    wind_position.x += 150 * dt
-
-    if(wind_position.x > screen.get_width()):
-        wind_position.x = 0
     # flip() the display to put your work on screen
     pygame.display.flip()
 
