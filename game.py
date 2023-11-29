@@ -1,5 +1,4 @@
 import math
-
 import pygame
 import random
 
@@ -29,7 +28,7 @@ class ParticleManagerSpitter():
             if (collisionDetector(player, particle)):
                 particle.position.y = screen.get_width() + 1
                 scalar = (particle.size/player.size)
-                player.velocity = pygame.Vector2((player.velocity.x + particle.velocity.x) * scalar, (player.velocity.y + particle.velocity.y) * scalar)
+                player.velocity = pygame.Vector2(player.velocity.x + (particle.velocity.x * scalar), player.velocity.y + (particle.velocity.y * scalar))
         self.spitoon(screen)
         for particle in self.particleArray:
             pygame.draw.circle(screen, "orange", particle.position, particle.size)
@@ -49,16 +48,23 @@ class ParticleManagerSpitter():
             return False
 
 class Player:
-    def __init__(self, position, velocity, size):
+    def __init__(self, position, velocity, size, image):
         self.position = position
         self.velocity = velocity
         self.size = size
+        self.image = image
 
     def tick(self, screen, dt):
-        pygame.draw.circle(screen, "green", self.position, self.size)
+        self.velocity = self.velocity + pygame.Vector2(0, 30) * dt
         self.position = self.position + self.velocity * dt
         if (self.position.x > screen.get_width()):
+            self.position.x = screen.get_width()
+
+        if (self.position.x < 0):
             self.position.x = 0
+
+        # pygame.draw.circle(screen, "green", self.position, self.size)
+        screen.blit(self.image, self.position)
 
 
 
@@ -85,22 +91,45 @@ clock = pygame.time.Clock()
 running = True
 dt = 0
 
-player = Player(pygame.Vector2(0, screen.get_height() / 2), pygame.Vector2(150, 0), 15)
+spaceman = pygame.image.load('img.png')
+player = Player(pygame.Vector2(screen.get_width() / 2, 0), pygame.Vector2(0, 150), 15, spaceman)
 particleSpitter = ParticleManagerSpitter(pygame.Vector2(screen.get_width() / 2, screen.get_height()))
 
 starPos = backgroundStars()
 
 
-
 while running:
+    # limits FPS to 60
+    # dt is delta time in seconds since last frame, used for framerate-
+    # independent physics.
+    dt = clock.tick(60) / 1000
+
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    # fill the screen with a color to wipe away anything from last frame
+    if player.position.y < 0 or player.position.y > screen.get_height():
+        pygame.font.init()
+        my_font = pygame.font.SysFont('Comic Sans MS', 30)
+        text_surface = my_font.render('Game Over You Win?', False, (255, 255, 255))
+        play_again = my_font.render('hold SPACE to play again', False, (255, 255, 255))
+        screen.blit(text_surface, (screen.get_width() / 2, screen.get_height() / 2))
+        screen.blit(play_again, (screen.get_width() / 2, screen.get_height() / 2 + 40))
+        pygame.display.flip()
 
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE]:
+            player.position = pygame.Vector2(screen.get_width() / 2, 1)
+            player.velocity = pygame.Vector2(0, 150)
+            particleSpitter.particleArray = []
+
+        continue
+
+
+
+    # fill the screen with a color to wipe away anything from last frame
     screen.fill("black")
     for star in starPos:
         pygame.draw.circle(screen, "white", star, 1)
@@ -108,22 +137,14 @@ while running:
     particleSpitter.spit(screen, dt, player)
     player.tick(screen, dt)
 
-    # keys = pygame.key.get_pressed()
-    # if keys[pygame.K_w]:
-    #     wind_position.y -= 300 * dt
-    # if keys[pygame.K_s]:
-    #     wind_position.y += 300 * dt
-    # if keys[pygame.K_a]:
-    #     wind_position.x -= 300 * dt
-    # if keys[pygame.K_d]:
-    #     wind_position.x += 150 * dt
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_a]:
+        player.velocity = player.velocity + pygame.Vector2(-5, 0)
+    if keys[pygame.K_d]:
+        player.velocity = player.velocity + pygame.Vector2(5, 0)
+
     # flip() the display to put your work on screen
     pygame.display.flip()
-
-    # limits FPS to 60
-    # dt is delta time in seconds since last frame, used for framerate-
-    # independent physics.
-    dt = clock.tick(60) / 1000
 
 pygame.quit()
 
