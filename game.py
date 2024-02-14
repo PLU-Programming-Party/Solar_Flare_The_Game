@@ -1,6 +1,7 @@
 import math
 import pygame
 import random
+from pygame import mixer
 
 TIMESCORE_MULTIPLIER = 100
 PARTICLESCORE_MULTIPLIER = 100
@@ -116,6 +117,24 @@ starPos = backgroundStars()
 sun_size = 300
 sun_position = pygame.Vector2(screen.get_width() / 2, screen.get_height() + 200)
 
+#Instantiate mixer
+mixer.init()
+
+#Load audio file
+mixer.music.load('song.mp3')
+
+print("music started playing....")
+
+#Set preferred volume
+mixer.music.set_volume(0.2)
+
+#Play the music
+mixer.music.play()
+
+mixer.music.rewind()
+mixer.music.set_pos(5.0)
+
+oh_no = False
 while running:
     # limits FPS to 60
     # dt is delta time in seconds since last frame, used for framerate-
@@ -135,6 +154,16 @@ while running:
     score_text = my_font.render(str(int(player.score)), False, (0, 0, 0))
 
     if player.position.y < 0 or player.position.y > screen.get_height() or collision_detector(player.size, player.position, sun_size, sun_position):
+        if not oh_no:
+            mixer.music.rewind()
+            mixer.music.set_pos(3.0)
+        oh_no = True
+
+        #TODO: fix this
+        # if mixer.music.get_pos() > (7.0 * 1000):
+        #     mixer.music.rewind()
+        #     mixer.music.set_pos(5.0)
+
         text_surface = my_font.render('Game Over You Lose', False, (255, 255, 255))
         play_again = my_font.render('hold SPACE to play again', False, (255, 255, 255))
         screen.blit(text_surface, (screen.get_width() / 2, screen.get_height() / 2))
@@ -143,6 +172,9 @@ while running:
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE]:
+            oh_no = False
+            mixer.music.rewind()
+            mixer.music.set_pos(5.0)
             player.score = 0
             player.position = pygame.Vector2(screen.get_width() / 2, 1)
             player.velocity = pygame.Vector2(0, 150)
