@@ -125,7 +125,7 @@ async def main():
     mixer.init()
 
     #Load audio file
-    mixer.music.load('song.mp3')
+    mixer.music.load('song.ogg')
 
     print("music started playing....")
 
