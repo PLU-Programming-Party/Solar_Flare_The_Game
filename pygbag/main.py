@@ -2,6 +2,7 @@ import math
 import pygame
 import random
 import asyncio
+import urllib
 from pygame import mixer
 
 # pygame setup
@@ -164,7 +165,11 @@ async def main():
                 pass
             oh_no = True
 
-            text_surface = my_font.render('Game Over You Lose', False, (255, 255, 255))
+            # dad_joke = requests.get("https://icanhazdadjoke.com/", headers={'Accept': "text/plain"}).text
+            # req = urllib.request.Request("https://icanhazdadjoke.com/", None, {'Accept': "text/plain", "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64)"})
+            # dad_joke = urllib.request.urlopen(req).read()
+
+            text_surface = my_font.render("You Lose!", False, (255, 255, 255))
             play_again = my_font.render('hold SPACE to play again', False, (255, 255, 255))
             screen.blit(text_surface, (screen.get_width() / 2, screen.get_height() / 2))
             screen.blit(play_again, (screen.get_width() / 2, screen.get_height() / 2 + 40))
@@ -193,6 +198,17 @@ async def main():
         particleSpitter.spit(screen, dt, player)
         pygame.draw.circle(screen, "yellow", sun_position, sun_size)
         player.tick(screen, dt)
+
+        # Moving Player via mouse clicks
+        mouse_pressed = pygame.mouse.get_pressed()[0]
+        if mouse_pressed:
+            # player.velocity = player.velocity + pygame.Vector2(0, -5)
+            x, y = pygame.mouse.get_pos()
+            center = screen.get_width() / 2
+            if x <= center:
+                player.velocity = player.velocity + pygame.Vector2(-5, 0)
+            if x > center:
+                player.velocity = player.velocity + pygame.Vector2(5, 0)
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a]:
