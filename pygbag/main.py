@@ -177,7 +177,8 @@ async def main():
             await asyncio.sleep(0)
 
             keys = pygame.key.get_pressed()
-            if keys[pygame.K_SPACE]:
+            mouse_pressed = pygame.mouse.get_pressed()[0]
+            if not (not keys[pygame.K_SPACE] and not mouse_pressed):
                 oh_no = False
                 #mixer.music.rewind()
                 #mixer.music.set_pos(5.0)
