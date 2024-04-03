@@ -180,6 +180,7 @@ async def main():
             mouse_pressed = pygame.mouse.get_pressed()[0]
             if not (not keys[pygame.K_SPACE] and not mouse_pressed):
                 oh_no = False
+                neveruse = False
                 #mixer.music.rewind()
                 #mixer.music.set_pos(5.0)
                 player.score = 0
