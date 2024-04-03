@@ -1,139 +1,233 @@
-import numpy as np
-import pandas as pd
-import matplotlib as mp
-from matplotlib import pyplot as plt
-import zipfile
-from datetime import timedelta
+import math
+import pygame
+import random
+import asyncio
+import urllib
+from pygame import mixer
 
-ARCHIVE_PATH = "data/archive.zip"
-DESTINATION_PATH = "data/"
-def un_zipper(zip_path: str, dest_path: str):
+# pygame setup
+pygame.init()
+screen = pygame.display.set_mode((1280, 720))
+clock = pygame.time.Clock()
+saved_time = clock.get_time()
 
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        # Extract all the contents of the zip file to the specified directory
-        zip_ref.extractall(dest_path)
+async def main():
 
-#un_zipper(ARCHIVE_PATH, DESTINATION_PATH)
-#
-def plot_line(x, y):
-    plt.plot(x,y)
-    plt.show()
+    TIMESCORE_MULTIPLIER = 100
+    PARTICLESCORE_MULTIPLIER = 100
 
-def str_to_timedelta(s):
-    days, hours, minutes, seconds = map(int, s.replace(' days ', ':').split(':'))
-    return timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
-
-# 0 days 00:00:00
-# 0:00:00:00
-# [0,00,00,00]
-
-def two_dimention_timeplot():
-
-    df = pd.read_csv("data/labels.csv")
-    period_a = df[df['period'] == 'train_a']
-    period_b = df[df['period'] == 'train_b']
-    period_c = df[df['period'] == 'train_c']
-
-    solar_wind = pd.read_csv("data/solar_wind.csv")
-    solar_wind_pd_a = solar_wind[solar_wind['period'] == 'train_a']
-
-    str_to_timedelta("0 days 00:00:00")
-
-    #period_a["timedelta"][:100].map(str_to_timedelta), period_a["dst"][:100],
-    plt.plot(period_a["timedelta"][:100].map(str_to_timedelta), period_a["dst"][:100], solar_wind_pd_a["timedelta"][:6000].map(str_to_timedelta), solar_wind_pd_a["density"][:6000])
-def function_for_plotting_the_satellite_position():
-    #Create 3D plot of satellite positional data
-    fig = plt.figure()
-    ax = fig.add_subplot(projection='3d')
-    satellite_pos = pd.read_csv("data/satellite_pos.csv")
-    period_a_sp = satellite_pos[satellite_pos['period'] == 'train_a']
-    period_b_sp = satellite_pos[satellite_pos['period'] == 'train_b']
-    period_c_sp = satellite_pos[satellite_pos['period'] == 'train_c']
-    size = -1
-    gse_x = period_b_sp["gse_x_ace"][0:size]
-    gse_y = period_b_sp["gse_y_ace"][0:size]
-    gse_z = period_b_sp["gse_z_ace"][0:size]
-    ax.scatter(gse_x, gse_y, gse_z)
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    ax.set_zlabel("z")
-    #min = pd.concat([gse_x, gse_y, gse_z]).min()
-    #max = pd.concat([gse_x, gse_y, gse_z]).max()
-    #ax.set_xlim3d(min, max)
-    #ax.set_ylim3d(min, max)
-    #ax.set_zlim3d(min, max)
-    #ax.set_aspect('equal', adjustable='box')
-    #ax.view_init(elev=30, azim=45)
-    #gse_x_median = gse_x.median()
-    #gse_y_median = gse_y.median()
-    #gse_z_median = gse_z.median()
-    plt.show()
-
-def lots_of_mag_vectors_across_time():
-    fig = plt.figure()
-    ax = fig.add_subplot(projection='3d')
-    rowskip = 3600
-    solar_data = pd.read_csv("data/solar_wind.csv")
-    solar_data = solar_data.iloc[rowskip:]
-    period_a_sp = solar_data[solar_data['period'] == 'train_a']
-    period_b_sp = solar_data[solar_data['period'] == 'train_b']
-    period_c_sp = solar_data[solar_data['period'] == 'train_c']
-    size = 1000
-    gse_x = [x for n, x in enumerate(period_b_sp["bx_gse"]) if n % rowskip == 0]
-    gse_y = [x for n, x in enumerate(period_b_sp["by_gse"]) if n % rowskip == 0]
-    gse_z = [x for n, x in enumerate(period_b_sp["bz_gse"]) if n % rowskip == 0]
-    ax.scatter(gse_x, gse_y, gse_z)
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    ax.set_zlabel("z")
-    plt.show()
+    class Particle:
+        def __init__(self, position, size, velocity):
+            self.position = position
+            self.size = size
+            self.velocity = velocity
+            #chai tea, chai means tea, you are saying tea tea bro.
 
 
-solar_data = pd.read_csv("data/solar_wind.csv")
+    class ParticleManagerSpitter():
+        #80mphMonster
+        #GarbageIsGood
+        def __init__(self, position):
+            self.particleArray = []
+            self.position = position
+            self.rotation = 360
 
-period_a = solar_data[solar_data['period'] == 'train_a']
-data_length = 1700
+        def spit(self, screen, dt, player):
+            velocityVector = pygame.Vector2(150,0)
+            self.rotation = random.randint(-180, 0)
+            self.particleArray.append(Particle(self.position.copy(), random.uniform(2,8), velocityVector.rotate(self.rotation)))
 
-def normalizer(df):
-    df_max = df.max()
-    df_min = df.min()
-    return (df - df_min) / (df_max - df_min)
-
-def movingAvg(data, windowSize):
-    ferret = []
-
-    for i in range(len(data)):
-        fish = sum(data[i:i+windowSize])/windowSize
-        ferret.append(fish)
-    return ferret
+            for particle in self.particleArray:
+                particle.position += particle.velocity * dt
+                if (collision_detector(player.size, player.position, particle.size, particle.position)):
+                    player.score += particle.size * PARTICLESCORE_MULTIPLIER
+                    particle.position.y = screen.get_width() + 1
+                    scalar = (particle.size/player.size)
+                    player.velocity = pygame.Vector2(player.velocity.x + (particle.velocity.x * scalar), player.velocity.y + (particle.velocity.y * scalar))
 
 
-def removeNan(data):
-    for i in range(len(data)):
-        if (np.isnan(data[i])):
-            notNanIndexForward = 0
-            notNanIndexBackward = 0
-            while (np.isnan(data[i+notNanIndexForward]) and (i+notNanIndexForward) != len(data) - 1):
-                notNanIndexForward += 1
-            while (np.isnan(data[i-notNanIndexBackward]) and (i-notNanIndexBackward) != 0):
-                notNanIndexBackward += 1
-            if ((i-notNanIndexBackward) == 0):
-                data[i] = data[i+notNanIndexForward]
-            elif ((i+notNanIndexForward) == len(data) - 1):
-                data[i] = data[i-notNanIndexBackward]
+            self.spitoon(screen)
+            for particle in self.particleArray:
+                pygame.draw.circle(screen, "orange", particle.position, particle.size)
+
+
+
+        def spitoon(self, screen):
+            #spitoon
+            self.particleArray = [p for p in self.particleArray if not self.spitoonable(screen, p)]
+
+
+
+        def spitoonable(self, screen, p):
+            if ((p.position.x > screen.get_width()) or (p.position.x < 0) or (p.position.y > screen.get_height()) or (p.position.y < 0)):
+                return True
             else:
-                data[i] = (data[i+notNanIndexForward] + data[i-notNanIndexBackward])/2
-    return data
+                return False
 
-data = normalizer(period_a["temperature"][:data_length])
-bob = [float("nan"), 1, 23, float("nan"), float("nan"), 43, float("nan")]
-lizard = removeNan(data)
-twoDogs = movingAvg(lizard, 10)
+    class Player:
+        def __init__(self, position, velocity, size, image_l, image_r):
+            self.position = position
+            self.velocity = velocity
+            self.size = size
+            self.image = image_l
+            self.image_l = image_l
+            self.image_r = image_r
+            self.score = 0
+
+        def tick(self, screen, dt):
+            self.velocity = self.velocity + pygame.Vector2(0, 30) * dt
+            self.position = self.position + self.velocity * dt
+            if (self.position.x > screen.get_width()):
+                self.position.x = screen.get_width()
+
+            if (self.position.x < 0):
+                self.position.x = 0
+
+            #pygame.draw.circle(screen, "green", self.position, self.size - 5)
+            screen.blit(self.image, self.position - pygame.Vector2(self.image.get_width() / 2, self.image.get_height() / 2))
+
+            if self.velocity.x > 0:
+                self.image = self.image_r
+            else:
+                self.image = self.image_l
 
 
-# period_a["timedelta"][:data_length].map(str_to_timedelta), data,
-# period_a["timedelta"][:data_length].map(str_to_timedelta), lizard
 
-plt.plot(period_a["timedelta"][:data_length].map(str_to_timedelta), movingAvg(lizard, 100))
+    def backgroundStars():
+        allStar = []
+        for i in range(250):
+            pos1 = random.normalvariate(screen.get_width() / 2, screen.get_width() / 6)
+            pos2 = random.normalvariate(screen.get_height() / 2, screen.get_width() / 6)
+            starPos = pygame.Vector2(pos1, pos2)
+            allStar.append(starPos)
+        return allStar
 
-plt.show()
+    def collision_detector(object1_size, object1_position, object2_size, object2_position):
+        dist = math.sqrt((object1_position.x - object2_position.x) ** 2 + (object1_position.y - object2_position.y) ** 2)
+        return (dist <= (object2_size + object1_size))
+
+
+    running = True
+    dt = 0
+
+    spaceman = pygame.image.load('img.png')
+    spaceman = pygame.transform.scale(spaceman, (45, 45))
+    image_l = spaceman
+    image_r = pygame.transform.flip(spaceman, True, False)
+    player = Player(pygame.Vector2(screen.get_width() / 2, 0), pygame.Vector2(0, 150), 25, image_l, image_r)
+    particleSpitter = ParticleManagerSpitter(pygame.Vector2(screen.get_width() / 2, screen.get_height()))
+
+    starPos = backgroundStars()
+
+    sun_size = 300
+    sun_position = pygame.Vector2(screen.get_width() / 2, screen.get_height() + 200)
+
+    #Instantiate mixer
+    mixer.init()
+
+    #Load audio file
+    mixer.music.load('song.ogg')
+
+    print("music started playing....")
+
+    #Set preferred volume
+    mixer.music.set_volume(0.2)
+
+    #Play the music
+    mixer.music.play()
+
+    #mixer.music.rewind()
+    #mixer.music.set_pos(5.0)
+
+    oh_no = False
+    while running:
+        # limits FPS to 60
+        # dt is delta time in seconds since last frame, used for framerate-
+        # independent physics.
+        dt = clock.tick(60) / 1000
+        player.score += dt * TIMESCORE_MULTIPLIER
+
+
+        # poll for events
+        # pygame.QUIT event means the user clicked X to close your window
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        pygame.font.init()
+        my_font = pygame.font.SysFont('Comic Sans MS', 30)
+        score_text = my_font.render(str(int(player.score)), False, (0, 0, 0))
+
+        if player.position.y < 0 or player.position.y > screen.get_height() or collision_detector(player.size, player.position, sun_size, sun_position):
+            if not oh_no:
+                #mixer.music.rewind()
+                #mixer.music.set_pos(3.0)
+                pass
+            oh_no = True
+
+            # dad_joke = requests.get("https://icanhazdadjoke.com/", headers={'Accept': "text/plain"}).text
+            # req = urllib.request.Request("https://icanhazdadjoke.com/", None, {'Accept': "text/plain", "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64)"})
+            # dad_joke = urllib.request.urlopen(req).read()
+
+            text_surface = my_font.render("You Lose!", False, (255, 255, 255))
+            play_again = my_font.render('hold SPACE to play again', False, (255, 255, 255))
+            screen.blit(text_surface, (screen.get_width() / 2, screen.get_height() / 2))
+            screen.blit(play_again, (screen.get_width() / 2, screen.get_height() / 2 + 40))
+            pygame.display.flip()
+            await asyncio.sleep(0)
+
+            keys = pygame.key.get_pressed()
+            mouse_pressed = pygame.mouse.get_pressed()[0]
+            if not (not keys[pygame.K_SPACE] and not mouse_pressed):
+                oh_no = False
+                neveruse = False
+                #mixer.music.rewind()
+                #mixer.music.set_pos(5.0)
+                player.score = 0
+                player.position = pygame.Vector2(screen.get_width() / 2, 1)
+                player.velocity = pygame.Vector2(0, 150)
+                particleSpitter.particleArray = []
+
+            continue
+
+
+
+        # fill the screen with a color to wipe away anything from last frame
+        screen.fill("black")
+        for star in starPos:
+            pygame.draw.circle(screen, "white", star, 1)
+
+        particleSpitter.spit(screen, dt, player)
+        pygame.draw.circle(screen, "yellow", sun_position, sun_size)
+        player.tick(screen, dt)
+
+        # Moving Player via mouse clicks
+        mouse_pressed = pygame.mouse.get_pressed()[0]
+        if mouse_pressed:
+            # player.velocity = player.velocity + pygame.Vector2(0, -5)
+            x, y = pygame.mouse.get_pos()
+            center = screen.get_width() / 2
+            if x <= center:
+                player.velocity = player.velocity + pygame.Vector2(-5, 0)
+            if x > center:
+                player.velocity = player.velocity + pygame.Vector2(5, 0)
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_a]:
+            player.velocity = player.velocity + pygame.Vector2(-5, 0)
+        if keys[pygame.K_d]:
+            player.velocity = player.velocity + pygame.Vector2(5, 0)
+
+        score_rect = score_text.get_rect(center=(screen.get_width() / 2, screen.get_height() - 40))
+        screen.blit(score_text, score_rect)
+
+        # flip() the display to put your work on screen
+        pygame.display.flip()
+        #pygame.display.update()
+        await asyncio.sleep(0)
+
+asyncio.run(main())
+
+
+
+
