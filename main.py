@@ -3,6 +3,8 @@ import pygame
 import random
 import asyncio
 import urllib
+import firebase_admin
+from firebase_admin import credentials, firestore
 from pygame import mixer
 
 # pygame setup
@@ -11,7 +13,26 @@ screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
 saved_time = clock.get_time()
 
-async def main():
+cred = credentials.Certificate('firebase-credentials.json')
+firebase_admin.initialize_app(cred)
+
+db = firestore.client()
+
+doc_ref = db.collection(u'users').document(u'alovelace')
+doc_ref.set({
+    u'first': u'Ada',
+    u'last': u'Lovelace',
+    u'born': 1815
+})
+
+doc_ref = db.collection(u'users').document(u'alovelace')
+doc_ref.update({
+    u'born': 1816
+})
+
+
+
+def main():
 
     TIMESCORE_MULTIPLIER = 100
     PARTICLESCORE_MULTIPLIER = 100
@@ -145,7 +166,6 @@ async def main():
         # dt is delta time in seconds since last frame, used for framerate-
         # independent physics.
         dt = clock.tick(60) / 1000
-        player.score += dt * TIMESCORE_MULTIPLIER
 
 
         # poll for events
@@ -162,19 +182,20 @@ async def main():
             if not oh_no:
                 #mixer.music.rewind()
                 #mixer.music.set_pos(3.0)
+                finalScore = int(player.score)
                 pass
             oh_no = True
-
             # dad_joke = requests.get("https://icanhazdadjoke.com/", headers={'Accept': "text/plain"}).text
             # req = urllib.request.Request("https://icanhazdadjoke.com/", None, {'Accept': "text/plain", "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64)"})
             # dad_joke = urllib.request.urlopen(req).read()
 
             text_surface = my_font.render("You Lose!", False, (255, 255, 255))
+            scoreText = my_font.render("Score: " + str(finalScore), False, (255, 255, 255))
             play_again = my_font.render('hold SPACE to play again', False, (255, 255, 255))
             screen.blit(text_surface, (screen.get_width() / 2, screen.get_height() / 2))
-            screen.blit(play_again, (screen.get_width() / 2, screen.get_height() / 2 + 40))
+            screen.blit(scoreText, (screen.get_width() / 2, screen.get_height() / 2 + 40))
+            screen.blit(play_again, (screen.get_width() / 2, screen.get_height() / 2 + 80))
             pygame.display.flip()
-            await asyncio.sleep(0)
 
             keys = pygame.key.get_pressed()
             mouse_pressed = pygame.mouse.get_pressed()[0]
@@ -224,9 +245,9 @@ async def main():
         # flip() the display to put your work on screen
         pygame.display.flip()
         #pygame.display.update()
-        await asyncio.sleep(0)
+        player.score += dt * TIMESCORE_MULTIPLIER
 
-asyncio.run(main())
+main()
 
 
 
