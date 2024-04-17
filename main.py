@@ -176,32 +176,49 @@ def main():
 
         pygame.font.init()
         my_font = pygame.font.SysFont('Comic Sans MS', 30)
-        score_text = my_font.render(str(int(player.score)), False, (0, 0, 0))
+        p = str(int(player.score))
+        score_text = my_font.render((p), False, (0, 0, 0))
 
         if player.position.y < 0 or player.position.y > screen.get_height() or collision_detector(player.size, player.position, sun_size, sun_position):
-            if not oh_no:
+            if oh_no == 0:
                 #mixer.music.rewind()
                 #mixer.music.set_pos(3.0)
-                finalScore = int(player.score)
+                #finalScore = int(p)
                 pass
-            oh_no = True
+            oh_no = oh_no + 1
             # dad_joke = requests.get("https://icanhazdadjoke.com/", headers={'Accept': "text/plain"}).text
             # req = urllib.request.Request("https://icanhazdadjoke.com/", None, {'Accept': "text/plain", "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64)"})
             # dad_joke = urllib.request.urlopen(req).read()
 
             text_surface = my_font.render("You Lose!", False, (255, 255, 255))
-            scoreText = my_font.render("Score: " + str(finalScore), False, (255, 255, 255))
+            scoreText = my_font.render("Score: " + str(p), False, (255, 255, 255))
             play_again = my_font.render('hold SPACE to play again', False, (255, 255, 255))
+            pygame.draw.circle(screen, "yellow", sun_position, sun_size)
+            score_rect = score_text.get_rect(center=(screen.get_width() / 2, screen.get_height() - 40))
+            screen.blit(score_text, score_rect)
             screen.blit(text_surface, (screen.get_width() / 2, screen.get_height() / 2))
             screen.blit(scoreText, (screen.get_width() / 2, screen.get_height() / 2 + 40))
             screen.blit(play_again, (screen.get_width() / 2, screen.get_height() / 2 + 80))
+            # Rect = x, y, width, height
+            # color = rgb = Burgundy
+            pygame.draw.rect(screen, (128,0,32), pygame.Rect(screen.get_width()/2-sun_size, screen.get_height()/2-sun_size, (sun_size*2), (sun_size*2)))
             pygame.display.flip()
+
+            # user = input box
+            # if
+            doc_ref = db.collection(u'users').document(u'alovelace')
+            doc_ref.set({
+                u'first': u'Ada',
+                u'last': u'Lovelace',
+                u'born': 1815
+            })
+
 
             keys = pygame.key.get_pressed()
             mouse_pressed = pygame.mouse.get_pressed()[0]
             if not (not keys[pygame.K_SPACE] and not mouse_pressed):
+
                 oh_no = False
-                neveruse = False
                 #mixer.music.rewind()
                 #mixer.music.set_pos(5.0)
                 player.score = 0
