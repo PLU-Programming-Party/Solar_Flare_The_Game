@@ -202,6 +202,18 @@ def main():
             # Rect = x, y, width, height
             # color = rgb = Burgundy
             pygame.draw.rect(screen, (128,0,32), pygame.Rect(screen.get_width()/2-sun_size, screen.get_height()/2-sun_size, (sun_size*2), (sun_size*2)))
+            high_scores = my_font.render('Top score' + str(p), True, (255, 255, 255))
+            screen.blit(high_scores, (screen.get_width() / 2 - 70, screen.get_height() / 2 - 250))
+            da_best_nums = 5
+            da_x_spot = screen.get_width() / 2 - 70
+            da_y_spot = screen.get_height() / 2 - 200
+            doc_ref = db.collection('HighScoreCollection').order_by("Score", direction = firestore.Query.DESCENDING)
+            results = ""
+            for i in range(da_best_nums):
+                results = str( doc_ref.get()[i]._data.get('userID') ) + " " + str( doc_ref.get()[i]._data.get('Score') )
+                scores = my_font.render(results, True, (255, 255, 255))
+                screen.blit(scores, (da_x_spot, da_y_spot + i * 50))
+
             pygame.display.flip()
 
             # user = input box
