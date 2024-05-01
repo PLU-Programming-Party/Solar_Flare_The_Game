@@ -180,7 +180,12 @@ def main():
         score_text = my_font.render((p), False, (0, 0, 0))
 
         if player.position.y < 0 or player.position.y > screen.get_height() or collision_detector(player.size, player.position, sun_size, sun_position):
+            da_best_nums = 5
             if oh_no == 0:
+                doc_ref = db.collection('HighScoreCollection').order_by("Score", direction=firestore.Query.DESCENDING)
+                results = []
+                for i in range(da_best_nums):
+                    results.append(str( doc_ref.get()[i]._data.get('userID') ) + " " + str( doc_ref.get()[i]._data.get('Score') ))
                 #mixer.music.rewind()
                 #mixer.music.set_pos(3.0)
                 #finalScore = int(p)
@@ -204,16 +209,31 @@ def main():
             pygame.draw.rect(screen, (128,0,32), pygame.Rect(screen.get_width()/2-sun_size, screen.get_height()/2-sun_size, (sun_size*2), (sun_size*2)))
             high_scores = my_font.render('Top score' + str(p), True, (255, 255, 255))
             screen.blit(high_scores, (screen.get_width() / 2 - 70, screen.get_height() / 2 - 250))
-            da_best_nums = 5
             da_x_spot = screen.get_width() / 2 - 70
             da_y_spot = screen.get_height() / 2 - 200
-            doc_ref = db.collection('HighScoreCollection').order_by("Score", direction = firestore.Query.DESCENDING)
-            results = ""
+            #doc_ref = db.collection('HighScoreCollection').order_by("Score", direction = firestore.Query.DESCENDING)
+            #results = ""
             for i in range(da_best_nums):
-                results = str( doc_ref.get()[i]._data.get('userID') ) + " " + str( doc_ref.get()[i]._data.get('Score') )
-                scores = my_font.render(results, True, (255, 255, 255))
-                screen.blit(scores, (da_x_spot, da_y_spot + i * 50))
-
+                #results = str( doc_ref.get()[i]._data.get('userID') ) + " " + str( doc_ref.get()[i]._data.get('Score') )
+                scores = my_font.render(results[i], True, (255, 255, 255))
+                screen.blit(scores, (da_x_spot, da_y_spot + i * 50)) #left top width height
+            payagainrect = pygame.Rect(screen.get_width() / 2 - sun_size + 150, screen.get_height() / 2 - sun_size + 50 * 10, sun_size,sun_size / 4)
+            pygame.draw.rect(screen, (26, 105, 133), payagainrect)
+            pay_again = my_font.render('Pay Again', True, (255, 255, 255))
+            screen.blit(pay_again, (screen.get_width()/2-sun_size+225, screen.get_height()/2-sun_size+50*10.3))
+            mouse_pressed = pygame.mouse.get_pressed()[0]
+            mx, my = pygame.mouse.get_pos()
+            if (mouse_pressed):
+                print(payagainrect.left, payagainrect.top, payagainrect.width, payagainrect.height)
+                print(payagainrect.left, payagainrect.left+payagainrect.width, payagainrect.top, payagainrect.top+payagainrect.height, mx, my)
+            if ((mouse_pressed) and ((mx >= payagainrect.left) and (mx <= payagainrect.left+payagainrect.width)) and ((my >= payagainrect.top and my <= payagainrect.top + payagainrect.height))):
+                oh_no = False
+                #mixer.music.rewind()
+                #mixer.music.set_pos(5.0)
+                player.score = 0
+                player.position = pygame.Vector2(screen.get_width() / 2, 1)
+                player.velocity = pygame.Vector2(0, 150)
+                particleSpitter.particleArray = []
             pygame.display.flip()
 
             # user = input box
@@ -225,22 +245,20 @@ def main():
                 u'born': 1815
             })
 
-
-            keys = pygame.key.get_pressed()
-            mouse_pressed = pygame.mouse.get_pressed()[0]
-            if not (not keys[pygame.K_SPACE] and not mouse_pressed):
-
-                oh_no = False
-                #mixer.music.rewind()
-                #mixer.music.set_pos(5.0)
-                player.score = 0
-                player.position = pygame.Vector2(screen.get_width() / 2, 1)
-                player.velocity = pygame.Vector2(0, 150)
-                particleSpitter.particleArray = []
-
+            # keys = pygame.key.get_pressed()
+            # mouse_pressed = pygame.mouse.get_pressed()[0]
+            # if not (not keys[pygame.K_SPACE] and not mouse_pressed):
+            #
+            #     oh_no = False
+            #     #mixer.music.rewind()
+            #     #mixer.music.set_pos(5.0)
+            #     player.score = 0
+            #     player.position = pygame.Vector2(screen.get_width() / 2, 1)
+            #     player.velocity = pygame.Vector2(0, 150)
+            #     particleSpitter.particleArray = []
             continue
 
-
+        #end of death handling
 
         # fill the screen with a color to wipe away anything from last frame
         screen.fill("black")
