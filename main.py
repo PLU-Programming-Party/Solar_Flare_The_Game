@@ -5,7 +5,7 @@ import asyncio
 import urllib
 import firebase_admin
 from firebase_admin import credentials, firestore
-from pygame import mixer
+from pygame import mixer, K_BACKSPACE, KEYDOWN
 
 # pygame setup
 pygame.init()
@@ -159,7 +159,7 @@ def main():
 
     #mixer.music.rewind()
     #mixer.music.set_pos(5.0)
-
+    text = ""
     oh_no = False
     while running:
         # limits FPS to 60
@@ -223,6 +223,33 @@ def main():
             screen.blit(pay_again, (screen.get_width()/2-sun_size+225, screen.get_height()/2-sun_size+50*10.3))
             mouse_pressed = pygame.mouse.get_pressed()[0]
             mx, my = pygame.mouse.get_pos()
+
+            letterBox = pygame.Rect(screen.get_width()/3- sun_size + 370, screen.get_height()/2-sun_size + 360, sun_size/4,sun_size/4)
+            pygame.draw.rect(screen,(26,7,133),letterBox)
+
+            letterBox2 = pygame.Rect(screen.get_width()/3- sun_size + 470, screen.get_height()/2-sun_size + 360, sun_size/4,sun_size/4)
+            pygame.draw.rect(screen,(26,7,133),letterBox2)
+
+            letterBox3 = pygame.Rect(screen.get_width()/3- sun_size + 570, screen.get_height()/2-sun_size + 360, sun_size/4,sun_size/4)
+            pygame.draw.rect(screen,(26,7,133),letterBox3)
+
+            my_font2 = pygame.font.SysFont('Comic Sans MS', 40)
+            counter = 0
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    text += event.unicode
+                counter += 1
+            print(counter)
+            # print(text)
+            fintext = my_font2.render(text[0] if len(text) > 0 else "", True, (255, 255, 255))
+            screen.blit(fintext, letterBox.topleft)
+
+            fintext = my_font2.render(text[1] if len(text) > 1 else "", True, (255, 255, 255))
+            screen.blit(fintext, letterBox2.topleft)
+
+            fintext = my_font2.render(text[2] if len(text) > 2 else "", True, (255, 255, 255))
+            screen.blit(fintext, letterBox3.topleft)
+
             if (mouse_pressed):
                 print(payagainrect.left, payagainrect.top, payagainrect.width, payagainrect.height)
                 print(payagainrect.left, payagainrect.left+payagainrect.width, payagainrect.top, payagainrect.top+payagainrect.height, mx, my)
@@ -231,6 +258,7 @@ def main():
                 #mixer.music.rewind()
                 #mixer.music.set_pos(5.0)
                 player.score = 0
+                text = ""
                 player.position = pygame.Vector2(screen.get_width() / 2, 1)
                 player.velocity = pygame.Vector2(0, 150)
                 particleSpitter.particleArray = []
